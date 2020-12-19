@@ -20,16 +20,18 @@ class SimpleVideo {
   /**
    * Render plugin`s main Element and fill it with saved data
    *
-   * @param {{data: SimpleVideoData, config: object, api: object}}
+   * @param {{data: SimpleVideoData, config: object, api: object, readOnly: Boolean}}
    *   data — previously saved data
    *   config - user config for Tool
    *   api - Editor.js API
+   *   readOnly - read-only mode flag
    */
-  constructor({data, config, api}) {
+  constructor({ data, api, readOnly }) {
     /**
      * Editor.js API
      */
     this.api = api;
+    this.readOnly = readOnly;
 
     /**
      * When block is only constructing,
@@ -113,13 +115,13 @@ class SimpleVideo {
    */
   render() {
     let wrapper = this._make('div', [this.CSS.baseClass, this.CSS.wrapper]),
-        loader = this._make('div', this.CSS.loading),
-        videoHolder = this._make('div', this.CSS.videoHolder),
-        video = this._make('video'),
-        caption = this._make('div', [this.CSS.input, this.CSS.caption], {
-          contentEditable: 'true',
-          innerHTML: this.data.caption || ''
-        });
+      loader = this._make('div', this.CSS.loading),
+      videoHolder = this._make('div', this.CSS.videoHolder),
+      video = this._make('video'),
+      caption = this._make('div', [this.CSS.input, this.CSS.caption], {
+        contentEditable: !this.readOnly,
+        innerHTML: this.data.caption || ''
+      });
 
     //caption.dataset.placeholder = 'Enter a caption';
     wrapper.appendChild(loader);
@@ -224,7 +226,7 @@ class SimpleVideo {
         break;
 
       case 'pattern':
-        const {data: text} = event.detail;
+        const { data: text } = event.detail;
 
         this.data = {
           url: text,
@@ -232,7 +234,7 @@ class SimpleVideo {
         break;
 
       case 'file':
-        const {file} = event.detail;
+        const { file } = event.detail;
 
         this.onDropHandler(file)
           .then(data => {
@@ -281,9 +283,9 @@ class SimpleVideo {
       patterns: {
         video: /https?:\/\/\S+\.(mp4|webm)$/i
       },
-      tags: [ 'video' ],
+      tags: ['video'],
       files: {
-        mimeTypes: [ 'video/*' ]
+        mimeTypes: ['video/*']
       },
     };
   }
@@ -295,7 +297,7 @@ class SimpleVideo {
   renderSettings() {
     let wrapper = document.createElement('div');
 
-    this.settings.forEach( tune => {
+    this.settings.forEach(tune => {
       let el = document.createElement('div');
 
       el.classList.add(this.CSS.settingsButton);
@@ -324,9 +326,9 @@ class SimpleVideo {
   _make(tagName, classNames = null, attributes = {}) {
     let el = document.createElement(tagName);
 
-    if ( Array.isArray(classNames) ) {
+    if (Array.isArray(classNames)) {
       el.classList.add(...classNames);
-    } else if( classNames ) {
+    } else if (classNames) {
       el.classList.add(classNames);
     }
 
@@ -351,7 +353,7 @@ class SimpleVideo {
    * @private
    */
   _acceptTuneView() {
-    this.settings.forEach( tune => {
+    this.settings.forEach(tune => {
       this.nodes.videoHolder.classList.toggle(this.CSS.videoHolder + '--' + tune.name.replace(/([A-Z])/g, (g) => `-${g[0].toLowerCase()}`), !!this.data[tune.name]);
 
       if (tune.name === 'stretched') {
@@ -370,6 +372,15 @@ class SimpleVideo {
         this.nodes.video.muted = this.data.muted;
       }
     });
+  }
+
+  /**
+   * Notify core that read-only mode is supported
+   *
+   * @returns {boolean}
+   */
+  static get isReadOnlySupported() {
+    return true;
   }
 }
 
